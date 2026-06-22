@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YouTube Thumbnail Downloader – TechPatraa</title>
+<meta name="description" content="YouTube video ke sabhi sizes ke thumbnails free mein download karo. HD, SD, HQ, MQ aur bhi sizes available hain." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #141e30; --bg2: #1a2840;
+    --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.10);
+    --green: #1D9E75; --gd: #0F6E56; --gl: #25c48f;
+    --text: #e8f4f0; --muted: #8aaca0; --accent: #5DCAA5;
+  }
+  body {
+    background: linear-gradient(135deg, var(--bg), var(--bg2));
+    min-height: 100vh; font-family: 'Inter', sans-serif;
+    color: var(--text); padding: 1.5rem 1rem 3rem;
+  }
+  .ad-wrap { text-align: center; margin: 0 auto 1.5rem; max-width: 680px; }
+  .ad-wrap.bottom { margin-top: 2rem; margin-bottom: 0; min-height: 60px; }
+  .ad-label { font-size: 0.62rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .tp-header { text-align: center; margin-bottom: 1.75rem; }
+  .tp-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--gd), var(--green));
+    border-radius: 14px; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 28px; margin-bottom: 1rem;
+  }
+  .tp-header h1 {
+    font-size: 1.75rem; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--gl));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 0.4rem;
+  }
+  .tp-header p { color: var(--muted); font-size: 0.875rem; }
+  .tp-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem;
+    max-width: 680px; margin: 0 auto 1.5rem;
+  }
+  .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tp-input {
+    flex: 1; min-width: 200px;
+    background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.75rem 1rem;
+    font-size: 0.9rem; color: var(--text);
+    font-family: 'Inter', sans-serif; outline: none; transition: border 0.2s;
+  }
+  .tp-input::placeholder { color: var(--muted); }
+  .tp-input:focus { border-color: var(--green); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gd), var(--green));
+    color: #fff; border: none; border-radius: 10px;
+    padding: 0.75rem 1.4rem; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent; border: 1px solid var(--green);
+    color: var(--gl); border-radius: 10px;
+    padding: 0.6rem 1rem; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.2s;
+  }
+  .btn-outline:hover { background: rgba(29,158,117,0.15); }
+  .btn-outline:disabled { opacity: 0.35; cursor: not-allowed; }
+  .tp-error {
+    display: none; margin-top: 0.6rem; color: #f87171; font-size: 0.82rem;
+    background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.22);
+    border-radius: 8px; padding: 0.5rem 0.8rem;
+  }
+  #loader { display: none; text-align: center; padding: 2rem; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid rgba(29,158,117,0.2);
+    border-top-color: var(--green); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 0.75rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loader p { color: var(--muted); font-size: 0.85rem; }
+  #results { display: none; max-width: 680px; margin: 0 auto; }
+  .video-info {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .video-info img {
+    width: 120px; height: 68px; border-radius: 8px;
+    object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .vmeta h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+  .vmeta span { font-size: 0.76rem; color: var(--muted); }
+  .hd-badge {
+    margin-left: auto; font-size: 0.72rem; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid rgba(29,158,117,0.3);
+    background: rgba(29,158,117,0.12); color: var(--accent);
+  }
+  .sec-label {
+    font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;
+  }
+  .thumb-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 14px;
+  }
+  .tcard {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; position: relative;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .tcard:hover { border-color: var(--green); transform: translateY(-2px); }
+  .tcard img {
+    width: 100%; display: block; aspect-ratio: 16/9;
+    object-fit: cover; background: rgba(255,255,255,0.04);
+  }
+  .tcard img.dim { opacity: 0.25; filter: grayscale(1); }
+  .tbadge {
+    position: absolute; top: 7px; left: 7px;
+    background: rgba(20,30,48,0.88); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.68rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 5px;
+  }
+  .tinfo { padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .tdim { font-size: 0.76rem; color: var(--muted); }
+  .tdim b { color: var(--accent); font-weight: 600; }
+  .unavail {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 38px;
+    background: rgba(20,30,48,0.72);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; color: var(--muted);
+  }
+  .actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--border);
+  }
+  .tp-tips {
+    background: rgba(29,158,117,0.07); border: 1px solid rgba(29,158,117,0.18);
+    border-radius: 12px; padding: 1rem 1.25rem; max-width: 680px; margin: 0 auto;
+  }
+  .tp-tips h4 { font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; }
+  .tp-tips li {
+    font-size: 0.78rem; color: var(--muted); list-style: none;
+    padding: 2px 0 2px 18px; position: relative;
+  }
+  .tp-tips li::before { content: "→"; position: absolute; left: 0; color: var(--green); font-size: 0.72rem; top: 3px; }
+  #toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: linear-gradient(135deg, var(--gd), var(--green));
+    color: #fff; padding: 10px 18px; border-radius: 10px;
+    font-size: 0.82rem; font-family: 'Inter', sans-serif;
+    display: none; z-index: 9999;
+  }
+  @media (max-width: 480px) {
+    .tp-header h1 { font-size: 1.35rem; }
+    .thumb-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP AD -->
+<div class="ad-wrap">
+  <div class="ad-label">Advertisement</div>
+  <script type="text/javascript">
+    atOptions = {
+      'key' : '40481fbfeb3ccbe3f4d81eba78ba36e8',
+      'format' : 'iframe',
+      'height' : 50,
+      'width' : 320,
+      'params' : {}
+    };
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/40481fbfeb3ccbe3f4d81eba78ba36e8/invoke.js"></script>
+</div>
+
+<!-- HEADER -->
+<div class="tp-header">
+  <div class="tp-icon">▶</div>
+  <h1>YouTube Thumbnail Downloader</h1>
+  <p>Kisi bhi YouTube video ke thumbnails instantly download karo — sabhi sizes free mein</p>
+</div>
+
+<!-- INPUT -->
+<div class="tp-card">
+  <div class="input-row">
+    <input class="tp-input" id="yt-url" placeholder="YouTube URL ya Video ID paste karo..." />
+    <button class="btn-primary" id="fetch-btn" onclick="fetchThumbnails()">🔍 Get Thumbnails</button>
+  </div>
+  <div class="tp-error" id="err-msg"></div>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="spinner"></div>
+  <p>Thumbnails fetch ho rahe hain...</p>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="video-info">
+    <img id="prev-img" src="" alt="Preview" />
+    <div class="vmeta">
+      <h3>YouTube Video</h3>
+      <span id="vid-id-txt">Video ID: —</span>
+    </div>
+    <div class="hd-badge" id="hd-badge">Checking...</div>
+  </div>
+  <div class="tp-card">
+    <p class="sec-label">All Available Sizes</p>
+    <div class="thumb-grid" id="thumb-grid"></div>
+    <div class="actions">
+      <button class="btn-primary" onclick="downloadAll()">⬇ Download All</button>
+      <button class="btn-outline" onclick="copyURL()">⧉ Copy Video URL</button>
+      <button class="btn-outline" onclick="resetTool()">↺ New Search</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIPS -->
+<div class="tp-tips">
+  <h4>💡 Supported URL Formats</h4>
+  <ul>
+    <li>youtube.com/watch?v=VIDEO_ID</li>
+    <li>youtu.be/VIDEO_ID</li>
+    <li>youtube.com/shorts/VIDEO_ID</li>
+    <li>youtube.com/embed/VIDEO_ID</li>
+    <li>Sirf 11-character Video ID bhi kaam karega</li>
+  </ul>
+</div>
+
+<!-- BOTTOM AD -->
+<div class="ad-wrap bottom">
+  <div class="ad-label">Advertisement</div>
+  <div id="d6326e2bc11513c8d9ebfbc2f5913f5f"></div>
+  <script type="text/javascript">
+    (function(){
+      var d = document, s = d.createElement('script');
+      s.src = '//effectivecpmnetwork.com/jumpto.php?r=d6326e2bc11513c8d9ebfbc2f5913f5f';
+      s.async = true;
+      d.getElementById('d6326e2bc11513c8d9ebfbc2f5913f5f').appendChild(s);
+    })();
+  </script>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SIZES = [
+  { key: 'maxresdefault', label: 'Max HD',  w: 1280, h: 720 },
+  { key: 'sddefault',     label: 'SD',      w: 640,  h: 480 },
+  { key: 'hqdefault',     label: 'HQ',      w: 480,  h: 360 },
+  { key: 'mqdefault',     label: 'MQ',      w: 320,  h: 180 },
+  { key: 'default',       label: 'Default', w: 120,  h: 90  },
+  { key: '0',             label: 'Full',    w: 480,  h: 360 },
+  { key: '1',             label: 'Part 1',  w: 120,  h: 90  },
+  { key: '2',             label: 'Part 2',  w: 120,  h: 90  },
+  { key: '3',             label: 'Part 3',  w: 120,  h: 90  },
+];
+let currentVid = '';
+
+function extractId(input) {
+  input = input.trim();
+  const pats = [
+    /(?:v=|\/embed\/|\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /^([A-Za-z0-9_-]{11})$/
+  ];
+  for (const p of pats) { const m = input.match(p); if (m) return m[1]; }
+  return null;
+}
+
+function showErr(msg) { const el = document.getElementById('err-msg'); el.textContent = msg; el.style.display = 'block'; }
+function hideErr() { document.getElementById('err-msg').style.display = 'none'; }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2600);
+}
+
+function tUrl(vid, key) { return 'https://img.youtube.com/vi/' + vid + '/' + key + '.jpg'; }
+
+function checkImg(url) {
+  return new Promise(resolve => {
+    const i = new Image();
+    i.onload  = () => resolve(i.naturalWidth > 120);
+    i.onerror = () => resolve(false);
+    i.src = url + '?_=' + Date.now();
+  });
+}
+
+async function fetchThumbnails() {
+  hideErr();
+  const val = document.getElementById('yt-url').value;
+  if (!val.trim()) { showErr('URL ya Video ID daalo pehle!'); return; }
+  const vid = extractId(val);
+  if (!vid) { showErr('Valid YouTube URL ya 11-character Video ID chahiye.'); return; }
+
+  currentVid = vid;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('fetch-btn').disabled = true;
+
+  await new Promise(r => setTimeout(r, 300));
+
+  document.getElementById('prev-img').src = tUrl(vid, 'hqdefault');
+  document.getElementById('vid-id-txt').textContent = 'Video ID: ' + vid;
+
+  const grid = document.getElementById('thumb-grid');
+  grid.innerHTML = '';
+  let hasHD = false;
+
+  for (const s of SIZES) {
+    const url = tUrl(vid, s.key);
+    const ok  = await checkImg(url);
+    if (s.key === 'maxresdefault' && ok) hasHD = true;
+
+    const card = document.createElement('div');
+    card.className = 'tcard';
+
+    const img = document.createElement('img');
+    img.alt = s.label; img.loading = 'lazy';
+    img.src = ok ? url : tUrl(vid, 'default');
+    if (!ok) img.classList.add('dim');
+
+    const badge = document.createElement('div');
+    badge.className = 'tbadge'; badge.textContent = s.label;
+
+    const info = document.createElement('div');
+    info.className = 'tinfo';
+
+    const dim = document.createElement('span');
+    dim.className = 'tdim';
+    dim.innerHTML = '<b>' + s.w + '×' + s.h + '</b>';
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-outline';
+    btn.innerHTML = '⬇';
+    btn.title = 'Download ' + s.label;
+    btn.disabled = !ok;
+    btn.onclick = () => dlOne(url, vid + '_' + s.key + '.jpg', s.label);
+
+    info.appendChild(dim); info.appendChild(btn);
+    card.appendChild(img); card.appendChild(badge);
+    if (!ok) {
+      const ov = document.createElement('div');
+      ov.className = 'unavail'; ov.textContent = 'Not available';
+      card.appendChild(ov);
+    }
+    card.appendChild(info);
+    grid.appendChild(card);
+  }
+
+  const hdb = document.getElementById('hd-badge');
+  if (hasHD) {
+    hdb.textContent = '✓ Max HD Available';
+    hdb.style.color = '#5DCAA5';
+    hdb.style.borderColor = 'rgba(29,158,117,0.3)';
+  } else {
+    hdb.textContent = 'Max HD Unavailable';
+    hdb.style.color = '#f87171';
+    hdb.style.borderColor = 'rgba(248,113,113,0.3)';
+  }
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('fetch-btn').disabled = false;
+}
+
+function dlOne(url, filename, label) {
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.target = '_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('⬇ ' + label + ' download ho raha hai...');
+}
+
+function downloadAll() {
+  SIZES.forEach(function(s, i) {
+    setTimeout(function() {
+      dlOne(tUrl(currentVid, s.key), currentVid + '_' + s.key + '.jpg', s.label);
+    }, i * 400);
+  });
+  setTimeout(function() { toast('✓ Sabhi thumbnails download ho gaye!'); }, SIZES.length * 400 + 200);
+}
+
+function copyURL() {
+  const url = 'https://www.youtube.com/watch?v=' + currentVid;
+  navigator.clipboard.writeText(url)
+    .then(function() { toast('✓ URL copy ho gaya!'); })
+    .catch(function() { toast('✓ URL copy ho gaya!'); });
+}
+
+function resetTool() {
+  document.getElementById('yt-url').value = '';
+  document.getElementById('results').style.display = 'none';
+  hideErr();
+  document.getElementById('yt-url').focus();
+}
+
+document.getElementById('yt-url').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') fetchThumbnails();
+});
+</script>
+</body>
+</html>
